@@ -3,114 +3,218 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>완수 ♥ 성지 완성데이트</title>
+  <title>완수♥성지 완성데이트</title>
   <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
   <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic&display=swap" rel="stylesheet" />
   <style>
     body {
       font-family: 'Nanum Gothic', sans-serif;
-      background-color: #f4f6f9;
+      background: #fff0f5;
       margin: 0;
       padding: 20px;
-      color: #333;
     }
     h1 {
       text-align: center;
-      color: #d16d7a;
-      margin-bottom: 40px;
+      color: #d63384;
     }
-    .region-selector, .subregion-selector, .record-form, .record-list {
-      max-width: 800px;
-      margin: 0 auto 30px auto;
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
       background: white;
-      border-radius: 16px;
+      border-radius: 10px;
       padding: 20px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-    select, input, textarea, button {
-      width: 100%;
-      padding: 12px;
-      margin: 8px 0;
+    .region-list, .subregion-list {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 12px;
+      list-style: none;
+      padding: 0;
+      margin: 10px 0 20px;
+    }
+    .region-list > li, .subregion-list > li {
+      padding: 10px;
+      border: 1px solid #ddd;
       border-radius: 8px;
-      border: 1px solid #ccc;
+      background-color: #ffe6f0;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .region-list > li.selected, .subregion-list > li.selected {
+      background-color: #ffb3d9;
+      font-weight: bold;
+    }
+    input[type="text"], textarea, input[type="date"] {
+      width: 100%;
+      padding: 8px;
+      margin: 8px 0;
       box-sizing: border-box;
-      font-size: 16px;
-      font-family: 'Nanum Gothic', sans-serif;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 1em;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 80px;
     }
     button {
-      background-color: #d16d7a;
+      background-color: #d63384;
       color: white;
-      font-weight: bold;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 7px;
       cursor: pointer;
-      transition: background 0.3s ease;
-    }
-    button:hover {
-      background-color: #b35564;
-    }
-    .record-item {
-      background: #fafafa;
-      border: 1px solid #ddd;
-      border-radius: 12px;
-      padding: 16px;
-      margin-top: 12px;
-    }
-    .record-item button {
-      width: auto;
-      margin-right: 10px;
+      font-size: 1em;
       margin-top: 8px;
     }
-    .image-preview {
-      max-width: 100%;
-      margin-top: 10px;
+    button:hover {
+      background-color: #b52a6a;
+    }
+    .record-list {
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 15px;
+    }
+    .record-card {
+      background: #ffe6f0;
       border-radius: 10px;
+      padding: 15px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+      position: relative;
+    }
+    .record-card img {
+      max-width: 100%;
+      border-radius: 10px;
+      margin-top: 10px;
+    }
+    .record-card h3 {
+      margin: 0 0 5px 0;
+    }
+    .record-card button.delete-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: red;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 3px 7px;
+      cursor: pointer;
+      margin-left: 5px;
+    }
+    .record-card button.edit-btn {
+      position: absolute;
+      top: 8px;
+      right: 50px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 3px 7px;
+      cursor: pointer;
+    }
+    .edit-buttons {
+      margin-top: 10px;
+    }
+    .edit-buttons button {
+      margin-right: 10px;
+      padding: 8px 12px;
+      font-size: 0.9em;
+    }
+    /* 별점 스타일 */
+    .star-rating {
+      display: flex;
+      font-size: 26px;
+      margin: 8px 0;
+      cursor: pointer;
+    }
+    .star {
+      color: #ddd;
+      user-select: none;
+      margin-right: 5px;
+      transition: color 0.3s;
+    }
+    .star.filled {
+      color: #f39c12;
     }
   </style>
 </head>
 <body>
-  <div id="app">
-    <h1>완수 ♥ 성지 완성데이트</h1>
+  <div id="app" class="container">
+    <h1>완수♥성지 완성데이트</h1>
 
-    <!-- 지역 선택 -->
-    <div class="region-selector">
-      <h3>메인 지역 선택</h3>
-      <select v-model="selectedRegion">
-        <option disabled value="">지역을 선택하세요</option>
-        <option v-for="region in regions" :key="region.name" :value="region.name">{{ region.name }}</option>
-      </select>
-      <input v-model="newRegion" placeholder="새 지역 이름 입력" />
-      <button @click="addRegion">지역 추가</button>
+    <!-- 메인 지역 -->
+    <div>
+      <input v-model="newMainRegion" placeholder="메인 지역 입력" @keyup.enter="addMainRegion" />
+      <button @click="addMainRegion">메인 지역 추가</button>
+    </div>
+    <ul class="region-list">
+      <li v-for="(region, rIndex) in regions" :key="region.name" 
+          :class="{selected: selectedMainRegion === region.name}"
+          @click="selectMainRegion(region.name)">
+        {{ region.name }}
+        <button class="delete-btn" @click.stop="removeMainRegion(rIndex)">삭제</button>
+      </li>
+    </ul>
+
+    <!-- 세부 지역 -->
+    <div v-if="selectedMainRegion">
+      <h3>{{ selectedMainRegion }} 세부 지역</h3>
+      <input v-model="newSubRegion" placeholder="세부 지역 입력" @keyup.enter="addSubRegion" />
+      <button @click="addSubRegion">세부 지역 추가</button>
+      <ul class="subregion-list">
+        <li v-for="(sub, sIndex) in getSubRegions()" :key="sub"
+            :class="{selected: selectedSubRegion === sub}"
+            @click="selectSubRegion(sub)">
+          {{ sub }}
+          <button class="delete-btn" @click.stop="removeSubRegion(sIndex)">삭제</button>
+        </li>
+      </ul>
     </div>
 
-    <!-- 세부 지역 선택 -->
-    <div class="subregion-selector" v-if="selectedRegion">
-      <h3>세부 지역 선택</h3>
-      <select v-model="selectedSubregion">
-        <option disabled value="">세부 지역을 선택하세요</option>
-        <option v-for="sub in getSubregions" :key="sub" :value="sub">{{ sub }}</option>
-      </select>
-      <input v-model="newSubregion" placeholder="새 세부 지역 이름 입력" />
-      <button @click="addSubregion">세부 지역 추가</button>
-    </div>
+    <!-- 여행기록 추가 및 수정 -->
+    <div v-if="selectedSubRegion" style="margin-top: 30px;">
+      <h3>여행기록 {{ editIndex === null ? '추가' : '수정' }} - {{ selectedMainRegion }} / {{ selectedSubRegion }}</h3>
+      <input type="text" v-model="newPlace.name" placeholder="여행지 이름 (예: 속초 영금정)" />
+      <input type="date" v-model="newPlace.date" />
+      <textarea v-model="newPlace.review" placeholder="한줄평 (예: 일출이 너무 예쁜 바닷가)"></textarea>
 
-    <!-- 여행기록 작성 -->
-    <div class="record-form" v-if="selectedSubregion">
-      <h3>여행기록 작성</h3>
-      <input v-model="recordTitle" placeholder="제목 입력" />
-      <textarea v-model="recordContent" placeholder="내용 입력"></textarea>
-      <input type="file" @change="handleImageUpload" ref="fileInput" />
-      <img v-if="imageDataUrl" :src="imageDataUrl" class="image-preview" />
-      <button @click="submitRecord">{{ editingIndex !== null ? '수정 완료' : '기록 추가' }}</button>
+      <!-- 별점 추가 -->
+      <div class="star-rating">
+        <span v-for="starNum in 5" :key="starNum" 
+              class="star" 
+              :class="{filled: starNum <= newPlace.rating}"
+              @click="newPlace.rating = starNum"
+              >
+          ★
+        </span>
+      </div>
+
+      <input type="file" @change="onImageChange" accept="image/*" />
+
+      <div class="edit-buttons">
+        <button v-if="editIndex === null" @click="addPlace">저장하기</button>
+        <div v-else>
+          <button @click="updatePlace">수정완료</button>
+          <button @click="cancelEdit" style="background:#999;">취소</button>
+        </div>
+      </div>
     </div>
 
     <!-- 여행기록 목록 -->
-    <div class="record-list" v-if="selectedSubregion">
-      <h3>여행기록 목록</h3>
-      <div v-for="(record, index) in getRecords" :key="index" class="record-item">
-        <h4>{{ record.title }}</h4>
-        <p>{{ record.content }}</p>
-        <img v-if="record.image" :src="record.image" class="image-preview" />
-        <button @click="editRecord(index)">수정</button>
-        <button @click="deleteRecord(index)">삭제</button>
+    <div class="record-list" v-if="places.length">
+      <div class="record-card" v-for="(place, index) in places" :key="index">
+        <button class="delete-btn" @click="deletePlace(index)">삭제</button>
+        <button class="edit-btn" @click="editPlace(index)">수정</button>
+        <h3>📍 {{ place.name }}</h3>
+        <p>– 가본 날: {{ place.date }}</p>
+        <p>– 한줄평: {{ place.review }}</p>
+        <p>– 평점: <span style="color:#f39c12;">{{ place.rating }} ★</span></p>
+        <img v-if="place.imageUrl" :src="place.imageUrl" alt="여행 사진" />
       </div>
     </div>
   </div>
@@ -119,107 +223,150 @@
     new Vue({
       el: '#app',
       data: {
-        regions: [
-          { name: '서울', subregions: ['강남', '홍대'] }
-        ],
-        selectedRegion: '',
-        newRegion: '',
-        selectedSubregion: '',
-        newSubregion: '',
-        recordTitle: '',
-        recordContent: '',
-        records: {},
-        imageDataUrl: '',
-        editingIndex: null,
-      },
-      computed: {
-        getSubregions() {
-          const region = this.regions.find(r => r.name === this.selectedRegion);
-          return region ? region.subregions : [];
+        regions: [],
+        newMainRegion: '',
+        selectedMainRegion: null,
+        newSubRegion: '',
+        selectedSubRegion: null,
+        newPlace: {
+          name: '',
+          date: '',
+          review: '',
+          imageUrl: '',
+          rating: 0 // 별점 추가
         },
-        getRecords() {
-          const key = this.selectedRegion + '_' + this.selectedSubregion;
-          return this.records[key] || [];
+        places: [],
+        editIndex: null  // 수정 중인 기록 인덱스
+      },
+      mounted() {
+        const saved = localStorage.getItem('travelDataV2');
+        if (saved) {
+          const data = JSON.parse(saved);
+          this.regions = data.regions || [];
+          this.selectedMainRegion = data.selectedMainRegion || null;
+          this.selectedSubRegion = data.selectedSubRegion || null;
+          this.places = data.places || [];
+        }
+      },
+      watch: {
+        regions: {
+          handler() { this.saveData(); },
+          deep: true
+        },
+        selectedMainRegion() { this.saveData(); },
+        selectedSubRegion() { this.saveData(); },
+        places: {
+          handler() { this.saveData(); },
+          deep: true
         }
       },
       methods: {
-        addRegion() {
-          if (this.newRegion && !this.regions.some(r => r.name === this.newRegion)) {
-            this.regions.push({ name: this.newRegion, subregions: [] });
-            this.selectedRegion = this.newRegion;
-            this.selectedSubregion = '';
-            this.newRegion = '';
-            this.newSubregion = '';
-            this.clearRecordForm();
-          }
-        },
-        addSubregion() {
-          const region = this.regions.find(r => r.name === this.selectedRegion);
-          if (region && this.newSubregion && !region.subregions.includes(this.newSubregion)) {
-            region.subregions.push(this.newSubregion);
-            this.selectedSubregion = this.newSubregion;
-            this.newSubregion = '';
-            this.clearRecordForm();
-          }
-        },
-        submitRecord() {
-          if (!this.recordTitle.trim()) {
-            alert('제목을 입력하세요.');
-            return;
-          }
-          if (!this.recordContent.trim()) {
-            alert('내용을 입력하세요.');
-            return;
-          }
-          const key = this.selectedRegion + '_' + this.selectedSubregion;
-          if (!this.records[key]) this.records[key] = [];
-
-          const newRecord = {
-            title: this.recordTitle,
-            content: this.recordContent,
-            image: this.imageDataUrl,
+        saveData() {
+          const data = {
+            regions: this.regions,
+            selectedMainRegion: this.selectedMainRegion,
+            selectedSubRegion: this.selectedSubRegion,
+            places: this.places
           };
-
-          if (this.editingIndex !== null) {
-            this.records[key].splice(this.editingIndex, 1, newRecord);
-            this.editingIndex = null;
-          } else {
-            this.records[key].push(newRecord);
+          localStorage.setItem('travelDataV2', JSON.stringify(data));
+        },
+        addMainRegion() {
+          const name = this.newMainRegion.trim();
+          if (!name || this.regions.find(r => r.name === name)) return alert('중복된 지역 또는 빈 입력입니다.');
+          this.regions.push({ name, subregions: [] });
+          this.newMainRegion = '';
+        },
+        removeMainRegion(index) {
+          if (this.regions[index].name === this.selectedMainRegion) {
+            this.selectedMainRegion = null;
+            this.selectedSubRegion = null;
+            this.places = [];
+            this.editIndex = null;
           }
-
-          this.clearRecordForm();
+          this.regions.splice(index, 1);
         },
-        deleteRecord(index) {
-          const key = this.selectedRegion + '_' + this.selectedSubregion;
-          this.records[key].splice(index, 1);
-          if (this.editingIndex === index) {
-            this.clearRecordForm();
-            this.editingIndex = null;
+        selectMainRegion(name) {
+          if (this.selectedMainRegion === name) {
+            this.selectedMainRegion = null;
+            this.selectedSubRegion = null;
+            this.places = [];
+            this.editIndex = null;
+            return;
+          }
+          this.selectedMainRegion = name;
+          this.selectedSubRegion = null;
+          this.places = [];
+          this.editIndex = null;
+        },
+        getSubRegions() {
+          const region = this.regions.find(r => r.name === this.selectedMainRegion);
+          return region ? region.subregions : [];
+        },
+        addSubRegion() {
+          const name = this.newSubRegion.trim();
+          const region = this.regions.find(r => r.name === this.selectedMainRegion);
+          if (!name || region.subregions.includes(name)) return alert('중복된 세부 지역 또는 빈 입력입니다.');
+          region.subregions.push(name);
+          this.newSubRegion = '';
+        },
+        removeSubRegion(index) {
+          const region = this.regions.find(r => r.name === this.selectedMainRegion);
+          const removed = region.subregions.splice(index, 1);
+          if (this.selectedSubRegion === removed[0]) {
+            this.selectedSubRegion = null;
+            this.places = [];
+            this.editIndex = null;
           }
         },
-        editRecord(index) {
-          const record = this.getRecords[index];
-          this.recordTitle = record.title;
-          this.recordContent = record.content;
-          this.imageDataUrl = record.image;
-          this.editingIndex = index;
+        selectSubRegion(name) {
+          if (this.selectedSubRegion === name) {
+            this.selectedSubRegion = null;
+            this.places = [];
+            this.editIndex = null;
+            return;
+          }
+          this.selectedSubRegion = name;
+          this.places = [];
+          this.editIndex = null;
         },
-        handleImageUpload(event) {
+        onImageChange(event) {
           const file = event.target.files[0];
-          if (file) {
-            const reader = new FileReader();
-            reader.onload = e => {
-              this.imageDataUrl = e.target.result;
-            };
-            reader.readAsDataURL(file);
-          }
-          this.$refs.fileInput.value = '';
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            this.newPlace.imageUrl = e.target.result;
+          };
+          reader.readAsDataURL(file);
         },
-        clearRecordForm() {
-          this.recordTitle = '';
-          this.recordContent = '';
-          this.imageDataUrl = '';
-          this.editingIndex = null;
+        addPlace() {
+          const { name, date, review, rating } = this.newPlace;
+          if (!name || !date || !review || rating === 0) return alert('모든 필드를 입력해 주세요! 별점도 꼭 선택해야 합니다.');
+          this.places.unshift({ ...this.newPlace });
+          this.newPlace = { name: '', date: '', review: '', imageUrl: '', rating: 0 };
+        },
+        deletePlace(index) {
+          if(this.editIndex === index) this.editIndex = null;
+          this.places.splice(index, 1);
+        },
+        editPlace(index) {
+          const place = this.places[index];
+          this.newPlace = { ...place };
+          this.editIndex = index;
+          this.$nextTick(() => {
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+          });
+        },
+        updatePlace() {
+          if (this.editIndex === null) return;
+          const { name, date, review, rating } = this.newPlace;
+          if (!name || !date || !review || rating === 0) return alert('모든 필드를 입력해 주세요! 별점도 꼭 선택해야 합니다.');
+          this.$set(this.places, this.editIndex, { ...this.newPlace });
+          this.editIndex = null;
+          this.newPlace = { name: '', date: '', review: '', imageUrl: '', rating: 0 };
+        },
+        cancelEdit() {
+          this.editIndex = null;
+          this.newPlace = { name: '', date: '', review: '', imageUrl: '', rating: 0 };
         }
       }
     });
