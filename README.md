@@ -1,185 +1,214 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>완수 ♥ 성지 완성데이트</title>
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f8f9fa;
       margin: 0;
-      padding: 20px;
-      color: #343a40;
+      font-family: 'Arial', sans-serif;
+      background: #f4f4f8;
+      color: #333;
     }
-    h1 {
+
+    header {
+      background-color: #FFB6C1;
+      padding: 1rem;
       text-align: center;
-      font-size: 2.5em;
-      color: #ff6b81;
-      margin-bottom: 20px;
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: #fff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
+
+    main {
+      padding: 2rem;
+    }
+
     .region-container {
       display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 20px;
-      margin-bottom: 40px;
+      overflow-x: auto;
+      gap: 1rem;
+      padding-bottom: 1rem;
     }
+
     .region {
-      background-color: #ffffff;
+      background-color: #fff;
       border-radius: 12px;
-      padding: 16px 24px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 1rem;
+      min-width: 200px;
       cursor: pointer;
-      transition: transform 0.2s ease;
+      transition: transform 0.2s;
     }
+
     .region:hover {
-      transform: scale(1.03);
+      transform: translateY(-5px);
     }
-    .subregion-list {
-      display: none;
-      margin-top: 10px;
+
+    .subregions {
+      margin-top: 1rem;
     }
-    .diary-container {
-      background-color: #ffffff;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      padding: 20px;
-      max-width: 600px;
-      margin: 0 auto;
-    }
-    .diary-item {
-      border-bottom: 1px solid #dee2e6;
-      padding: 10px 0;
-    }
-    .diary-item:last-child {
-      border-bottom: none;
-    }
-    .diary-item button {
-      margin-left: 8px;
-      background: none;
-      border: none;
+
+    .subregion {
+      margin: 0.5rem 0;
       cursor: pointer;
-      color: #ff6b81;
+      color: #007BFF;
+      text-decoration: underline;
     }
+
+    .travel-log-form,
+    .travel-logs {
+      margin-top: 2rem;
+    }
+
     textarea {
       width: 100%;
-      height: 80px;
-      margin-top: 12px;
-      padding: 10px;
-      border-radius: 6px;
+      height: 100px;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      border-radius: 8px;
       border: 1px solid #ccc;
-      resize: none;
+      font-size: 1rem;
     }
+
     button {
-      margin-top: 10px;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 6px;
-      background-color: #ff6b81;
+      background-color: #FF69B4;
       color: white;
-      font-weight: bold;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 8px;
       cursor: pointer;
-      transition: background-color 0.2s ease;
+      font-weight: bold;
     }
-    button:hover {
-      background-color: #e85a70;
+
+    .log-item {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      padding: 1rem;
+      margin-bottom: 1rem;
+      position: relative;
+    }
+
+    .log-item button {
+      margin-right: 0.5rem;
+    }
+
+    .edit-area {
+      width: 100%;
+      height: 80px;
+      margin-top: 0.5rem;
     }
   </style>
 </head>
+
 <body>
-  <h1>완수 ♥ 성지 완성데이트</h1>
-
-  <div class="region-container">
-    <div class="region" onclick="toggleSubregions('seoul')">서울</div>
-    <div class="region" onclick="toggleSubregions('busan')">부산</div>
-    <div class="region" onclick="toggleSubregions('jeju')">제주</div>
-  </div>
-
-  <div id="subregions"></div>
-  <div class="diary-container" id="diaryContainer" style="display:none;">
-    <h2>여행 기록</h2>
-    <div id="diaryList"></div>
-    <textarea id="newDiary" placeholder="오늘의 데이트를 기록해보세요"></textarea>
-    <button onclick="addDiary()">기록 추가</button>
-  </div>
+  <header>완수 ♥ 성지 완성데이트</header>
+  <main>
+    <div class="region-container" id="regions"></div>
+    <div class="subregions" id="subregions"></div>
+    <div class="travel-log-form" id="log-form" style="display: none;">
+      <h3>여행 기록 작성</h3>
+      <textarea id="log-text" placeholder="여행 내용을 입력하세요"></textarea>
+      <button onclick="addLog()">기록 저장</button>
+    </div>
+    <div class="travel-logs" id="travel-logs"></div>
+  </main>
 
   <script>
-    const subregionsData = {
-      seoul: ["강남", "홍대", "한강"],
-      busan: ["해운대", "광안리", "남포동"],
-      jeju: ["성산", "한림", "서귀포"]
+    const regions = {
+      '서울': ['강남', '홍대', '종로'],
+      '부산': ['해운대', '광안리', '남포동'],
+      '제주': ['성산', '애월', '한림']
     };
 
-    let currentRegion = "";
-    let diaryData = {};
+    let selectedSubregion = '';
+    let logs = JSON.parse(localStorage.getItem('travelLogs')) || {};
 
-    function toggleSubregions(region) {
-      currentRegion = region;
+    function renderRegions() {
+      const container = document.getElementById('regions');
+      container.innerHTML = '';
+      for (const main in regions) {
+        const div = document.createElement('div');
+        div.className = 'region';
+        div.textContent = main;
+        div.onclick = () => renderSubregions(main);
+        container.appendChild(div);
+      }
+    }
+
+    function renderSubregions(main) {
       const container = document.getElementById('subregions');
       container.innerHTML = '';
-      const subregionList = document.createElement('div');
-      subregionList.className = 'subregion-list';
-
-      subregionsData[region].forEach(sub => {
-        const btn = document.createElement('button');
-        btn.innerText = sub;
-        btn.onclick = () => showDiary(sub);
-        subregionList.appendChild(btn);
-      });
-
-      container.appendChild(subregionList);
-      subregionList.style.display = 'block';
-    }
-
-    function showDiary(subregion) {
-      const diaryContainer = document.getElementById('diaryContainer');
-      diaryContainer.style.display = 'block';
-      renderDiaryList(subregion);
-    }
-
-    function renderDiaryList(subregion) {
-      const diaryList = document.getElementById('diaryList');
-      diaryList.innerHTML = '';
-      const items = diaryData[subregion] || [];
-      items.forEach((entry, index) => {
+      regions[main].forEach(sub => {
         const div = document.createElement('div');
-        div.className = 'diary-item';
+        div.className = 'subregion';
+        div.textContent = sub;
+        div.onclick = () => {
+          selectedSubregion = sub;
+          document.getElementById('log-form').style.display = 'block';
+          renderLogs();
+        };
+        container.appendChild(div);
+      });
+    }
 
-        const textArea = document.createElement('textarea');
-        textArea.value = entry;
-        textArea.onchange = () => updateDiary(subregion, index, textArea.value);
+    function addLog() {
+      const text = document.getElementById('log-text').value;
+      if (!text) return;
+      if (!logs[selectedSubregion]) logs[selectedSubregion] = [];
+      logs[selectedSubregion].push(text);
+      localStorage.setItem('travelLogs', JSON.stringify(logs));
+      document.getElementById('log-text').value = '';
+      renderLogs();
+    }
+
+    function renderLogs() {
+      const container = document.getElementById('travel-logs');
+      container.innerHTML = '';
+      const entries = logs[selectedSubregion] || [];
+      entries.forEach((entry, index) => {
+        const div = document.createElement('div');
+        div.className = 'log-item';
+
+        const p = document.createElement('p');
+        p.textContent = entry;
+        div.appendChild(p);
+
+        const editBtn = document.createElement('button');
+        editBtn.textContent = '수정';
+        editBtn.onclick = () => editLog(index);
+        div.appendChild(editBtn);
 
         const deleteBtn = document.createElement('button');
-        deleteBtn.innerText = '삭제';
-        deleteBtn.onclick = () => deleteDiary(subregion, index);
-
-        div.appendChild(textArea);
+        deleteBtn.textContent = '삭제';
+        deleteBtn.onclick = () => deleteLog(index);
         div.appendChild(deleteBtn);
-        diaryList.appendChild(div);
+
+        container.appendChild(div);
       });
     }
 
-    function addDiary() {
-      const input = document.getElementById('newDiary');
-      const content = input.value.trim();
-      if (!content || !currentRegion) return;
-      const subregion = document.querySelector('#subregions button:focus')?.innerText;
-      if (!subregion) return;
-
-      if (!diaryData[subregion]) diaryData[subregion] = [];
-      diaryData[subregion].push(content);
-      input.value = '';
-      renderDiaryList(subregion);
+    function deleteLog(index) {
+      logs[selectedSubregion].splice(index, 1);
+      localStorage.setItem('travelLogs', JSON.stringify(logs));
+      renderLogs();
     }
 
-    function updateDiary(subregion, index, newText) {
-      diaryData[subregion][index] = newText;
+    function editLog(index) {
+      const newText = prompt('수정할 내용을 입력하세요', logs[selectedSubregion][index]);
+      if (newText !== null) {
+        logs[selectedSubregion][index] = newText;
+        localStorage.setItem('travelLogs', JSON.stringify(logs));
+        renderLogs();
+      }
     }
 
-    function deleteDiary(subregion, index) {
-      diaryData[subregion].splice(index, 1);
-      renderDiaryList(subregion);
-    }
+    renderRegions();
   </script>
 </body>
+
 </html>
