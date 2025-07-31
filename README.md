@@ -9,11 +9,14 @@
     .region-button { padding: 10px 20px; background: #4CAF50; color: white; border: none; cursor: pointer; border-radius: 5px; }
     .region-button:hover { background: #45a049; }
     #details { padding: 20px; border-top: 1px solid #ddd; }
-    .subregion { margin-top: 15px; border: 1px solid #ccc; padding: 10px; border-radius: 5px; }
-    .subregion h4 { margin: 0 0 10px; }
-    .subregion img { max-width: 100%; height: auto; margin-top: 10px; border-radius: 5px; }
-    .add-subregion-btn, .add-image-btn { margin-top: 10px; padding: 5px 10px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; }
-    .add-subregion-btn:hover, .add-image-btn:hover { background: #1976D2; }
+    .subregion, .saved-subregion { margin-top: 15px; border: 1px solid #ccc; padding: 10px; border-radius: 5px; }
+    .subregion h4, .saved-subregion h4 { margin: 0 0 10px; }
+    .subregion img, .saved-subregion img { max-width: 100%; height: auto; margin-top: 10px; border-radius: 5px; }
+    .add-subregion-btn, .add-image-btn, .save-btn, .delete-btn { margin-top: 10px; padding: 5px 10px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    .add-subregion-btn:hover, .add-image-btn:hover, .save-btn:hover, .delete-btn:hover { background: #1976D2; }
+    .delete-btn { background: #f44336; }
+    .delete-btn:hover { background: #d32f2f; }
+    input[type="file"] { margin-top: 10px; }
   </style>
 </head>
 <body>
@@ -42,22 +45,46 @@
       if (!title) return;
 
       subDiv.innerHTML = `
-        <h4>${title}</h4>
+        <h4 contenteditable="true">${title}</h4>
         <textarea placeholder="여행기록 작성..." rows="4" style="width:100%;"></textarea>
+        <input type="file" accept="image/*" onchange="previewImage(this)">
         <div class="image-list"></div>
-        <button class="add-image-btn" onclick="addImage(this)">+ 이미지 추가</button>
+        <button class="save-btn" onclick="saveSubregion(this)">저장하기</button>
+        <button class="delete-btn" onclick="this.parentElement.remove()">삭제</button>
       `;
       subregions.appendChild(subDiv);
     }
 
-    function addImage(button) {
-      const container = button.previousElementSibling;
-      const imageUrl = prompt('이미지 주소(URL)를 입력하세요');
-      if (imageUrl) {
-        const img = document.createElement('img');
-        img.src = imageUrl;
-        container.appendChild(img);
+    function previewImage(input) {
+      const file = input.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = document.createElement('img');
+          img.src = e.target.result;
+          input.nextElementSibling.appendChild(img);
+        };
+        reader.readAsDataURL(file);
       }
+    }
+
+    function saveSubregion(button) {
+      const container = button.parentElement;
+      const title = container.querySelector('h4').innerText;
+      const text = container.querySelector('textarea').value;
+      const imageList = container.querySelector('.image-list');
+
+      const newDiv = document.createElement('div');
+      newDiv.className = 'saved-subregion';
+      newDiv.innerHTML = `
+        <h4>${title}</h4>
+        <p>${text}</p>
+        <div class="image-list">${imageList.innerHTML}</div>
+        <button class="delete-btn" onclick="this.parentElement.remove()">삭제</button>
+      `;
+
+      container.remove(); // 입력 폼 삭제
+      document.getElementById('subregions').appendChild(newDiv); // 목록에 추가
     }
   </script>
 </body>
