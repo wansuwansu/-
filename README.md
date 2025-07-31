@@ -1,156 +1,201 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>완수 ♥ 성지 완성데이트</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-</head>
-<body class="bg-gray-50 min-h-screen">
-  <header class="bg-white shadow p-6 text-center text-3xl font-bold text-pink-600">
-    완수 ♥ 성지 완성데이트
-  </header>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>완수 ♥ 성지 완성데이트</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'Nanum Gothic', sans-serif;
+        background-color: #f4f6f9;
+        margin: 0;
+        padding: 20px;
+        color: #333;
+      }
+      h1 {
+        text-align: center;
+        color: #d16d7a;
+        margin-bottom: 40px;
+      }
+      .region-selector, .subregion-selector, .record-form, .record-list {
+        max-width: 800px;
+        margin: 0 auto 30px auto;
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+      select, input, textarea, button {
+        width: 100%;
+        padding: 12px;
+        margin: 8px 0;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        box-sizing: border-box;
+      }
+      button {
+        background-color: #d16d7a;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background 0.3s ease;
+      }
+      button:hover {
+        background-color: #b35564;
+      }
+      .record-item {
+        background: #fafafa;
+        border: 1px solid #ddd;
+        border-radius: 12px;
+        padding: 16px;
+        margin-top: 12px;
+      }
+      .record-item button {
+        width: auto;
+        margin-right: 10px;
+        margin-top: 8px;
+      }
+      .image-preview {
+        max-width: 100%;
+        margin-top: 10px;
+        border-radius: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <h1>완수 ♥ 성지 완성데이트</h1>
 
-  <main class="max-w-6xl mx-auto p-6">
-    <!-- 메인 지역 목록 -->
-    <section>
-      <h2 class="text-2xl font-semibold text-gray-700 mb-4">지역 선택</h2>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <button class="bg-white border hover:bg-pink-100 rounded-lg p-4 shadow">서울</button>
-        <button class="bg-white border hover:bg-pink-100 rounded-lg p-4 shadow">경기</button>
-        <button class="bg-white border hover:bg-pink-100 rounded-lg p-4 shadow">강원</button>
-        <button class="bg-white border hover:bg-pink-100 rounded-lg p-4 shadow">부산</button>
-        <!-- 더 많은 지역 -->
+      <!-- 지역 선택 -->
+      <div class="region-selector">
+        <h3>메인 지역 선택</h3>
+        <select v-model="selectedRegion">
+          <option disabled value="">지역을 선택하세요</option>
+          <option v-for="region in regions" :key="region.name">{{ region.name }}</option>
+        </select>
+        <input v-model="newRegion" placeholder="새 지역 이름 입력" />
+        <button @click="addRegion">지역 추가</button>
       </div>
-    </section>
 
-    <!-- 세부 지역 UI -->
-    <section class="mt-10">
-      <h3 class="text-xl font-semibold text-gray-700 mb-3">세부 지역 선택</h3>
-      <div class="flex flex-wrap gap-3">
-        <button class="bg-gray-200 hover:bg-pink-300 text-gray-800 px-4 py-2 rounded-full">강남역</button>
-        <button class="bg-gray-200 hover:bg-pink-300 text-gray-800 px-4 py-2 rounded-full">홍대입구</button>
-        <button class="bg-gray-200 hover:bg-pink-300 text-gray-800 px-4 py-2 rounded-full">도산공원</button>
-        <!-- 더 많은 세부 지역 -->
+      <!-- 세부 지역 선택 -->
+      <div class="subregion-selector" v-if="selectedRegion">
+        <h3>세부 지역 선택</h3>
+        <select v-model="selectedSubregion">
+          <option disabled value="">세부 지역을 선택하세요</option>
+          <option v-for="sub in getSubregions" :key="sub">{{ sub }}</option>
+        </select>
+        <input v-model="newSubregion" placeholder="새 세부 지역 이름 입력" />
+        <button @click="addSubregion">세부 지역 추가</button>
       </div>
-    </section>
 
-    <!-- 여행기록 작성 및 수정 -->
-    <section class="mt-10">
-      <h3 class="text-xl font-semibold text-gray-700 mb-3">여행 기록 작성</h3>
-      <form id="recordForm" class="bg-white shadow-md rounded-lg p-6 space-y-4">
-        <input type="hidden" id="editIndex" value="" />
-        <input type="text" id="title" placeholder="제목" class="w-full border px-4 py-2 rounded" required />
-        <textarea id="content" rows="4" placeholder="내용을 입력하세요..." class="w-full border px-4 py-2 rounded" required></textarea>
-        <input type="file" id="imageUpload" accept="image/*" class="block" />
-        <button type="submit" class="bg-pink-500 hover:bg-pink-600 text-white font-semibold px-6 py-2 rounded">
-          저장하기
-        </button>
-      </form>
-    </section>
-
-    <!-- 여행기록 목록 -->
-    <section class="mt-10">
-      <h3 class="text-xl font-semibold text-gray-700 mb-3">여행 기록 목록</h3>
-      <div id="recordList" class="grid gap-6">
-        <!-- 기록이 여기 렌더링됨 -->
+      <!-- 여행기록 작성 -->
+      <div class="record-form" v-if="selectedSubregion">
+        <h3>여행기록 작성</h3>
+        <input v-model="recordTitle" placeholder="제목 입력" />
+        <textarea v-model="recordContent" placeholder="내용 입력"></textarea>
+        <input type="file" @change="handleImageUpload" />
+        <img v-if="imageDataUrl" :src="imageDataUrl" class="image-preview" />
+        <button @click="submitRecord">{{ editingIndex !== null ? '수정 완료' : '기록 추가' }}</button>
       </div>
-    </section>
-  </main>
 
-  <script>
-    let records = [];
+      <!-- 여행기록 목록 -->
+      <div class="record-list" v-if="selectedSubregion">
+        <h3>여행기록 목록</h3>
+        <div v-for="(record, index) in getRecords" :key="index" class="record-item">
+          <h4>{{ record.title }}</h4>
+          <p>{{ record.content }}</p>
+          <img v-if="record.image" :src="record.image" class="image-preview" />
+          <button @click="editRecord(index)">수정</button>
+          <button @click="deleteRecord(index)">삭제</button>
+        </div>
+      </div>
+    </div>
 
-    function renderRecords() {
-      const list = document.getElementById("recordList");
-      list.innerHTML = "";
-      records.forEach((record, index) => {
-        const recordEl = document.createElement("div");
-        recordEl.className = "bg-white p-5 rounded-lg shadow relative";
+    <script>
+      new Vue({
+        el: '#app',
+        data: {
+          regions: [],
+          selectedRegion: '',
+          newRegion: '',
+          selectedSubregion: '',
+          newSubregion: '',
+          recordTitle: '',
+          recordContent: '',
+          records: {},
+          imageDataUrl: '',
+          editingIndex: null,
+        },
+        computed: {
+          getSubregions() {
+            const region = this.regions.find(r => r.name === this.selectedRegion);
+            return region ? region.subregions : [];
+          },
+          getRecords() {
+            const key = this.selectedRegion + '_' + this.selectedSubregion;
+            return this.records[key] || [];
+          }
+        },
+        methods: {
+          addRegion() {
+            if (this.newRegion && !this.regions.some(r => r.name === this.newRegion)) {
+              this.regions.push({ name: this.newRegion, subregions: [] });
+              this.newRegion = '';
+            }
+          },
+          addSubregion() {
+            const region = this.regions.find(r => r.name === this.selectedRegion);
+            if (region && this.newSubregion && !region.subregions.includes(this.newSubregion)) {
+              region.subregions.push(this.newSubregion);
+              this.newSubregion = '';
+            }
+          },
+          submitRecord() {
+            const key = this.selectedRegion + '_' + this.selectedSubregion;
+            if (!this.records[key]) this.records[key] = [];
 
-        if (record.image) {
-          const img = document.createElement("img");
-          img.src = record.image;
-          img.alt = "여행 사진";
-          img.className = "mb-3 rounded max-h-60 w-full object-cover";
-          recordEl.appendChild(img);
+            const newRecord = {
+              title: this.recordTitle,
+              content: this.recordContent,
+              image: this.imageDataUrl
+            };
+
+            if (this.editingIndex !== null) {
+              this.records[key].splice(this.editingIndex, 1, newRecord);
+              this.editingIndex = null;
+            } else {
+              this.records[key].push(newRecord);
+            }
+
+            this.recordTitle = '';
+            this.recordContent = '';
+            this.imageDataUrl = '';
+          },
+          deleteRecord(index) {
+            const key = this.selectedRegion + '_' + this.selectedSubregion;
+            this.records[key].splice(index, 1);
+          },
+          editRecord(index) {
+            const record = this.getRecords[index];
+            this.recordTitle = record.title;
+            this.recordContent = record.content;
+            this.imageDataUrl = record.image;
+            this.editingIndex = index;
+          },
+          handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+              const reader = new FileReader();
+              reader.onload = e => {
+                this.imageDataUrl = e.target.result;
+              };
+              reader.readAsDataURL(file);
+            }
+          }
         }
-
-        const title = document.createElement("h4");
-        title.className = "text-lg font-bold text-pink-600 mb-1";
-        title.innerText = record.title;
-        recordEl.appendChild(title);
-
-        const content = document.createElement("p");
-        content.className = "text-gray-700";
-        content.innerText = record.content;
-        recordEl.appendChild(content);
-
-        const buttonWrap = document.createElement("div");
-        buttonWrap.className = "mt-4 space-x-2";
-
-        const editBtn = document.createElement("button");
-        editBtn.className = "bg-yellow-400 hover:bg-yellow-500 px-3 py-1 rounded text-white";
-        editBtn.innerText = "수정";
-        editBtn.onclick = () => editRecord(index);
-
-        const deleteBtn = document.createElement("button");
-        deleteBtn.className = "bg-red-500 hover:bg-red-600 px-3 py-1 rounded text-white";
-        deleteBtn.innerText = "삭제";
-        deleteBtn.onclick = () => deleteRecord(index);
-
-        buttonWrap.appendChild(editBtn);
-        buttonWrap.appendChild(deleteBtn);
-        recordEl.appendChild(buttonWrap);
-
-        list.appendChild(recordEl);
       });
-    }
-
-    function editRecord(index) {
-      const record = records[index];
-      document.getElementById("title").value = record.title;
-      document.getElementById("content").value = record.content;
-      document.getElementById("editIndex").value = index;
-    }
-
-    function deleteRecord(index) {
-      if (confirm("정말 삭제하시겠습니까?")) {
-        records.splice(index, 1);
-        renderRecords();
-      }
-    }
-
-    document.getElementById("recordForm").addEventListener("submit", (e) => {
-      e.preventDefault();
-      const title = document.getElementById("title").value;
-      const content = document.getElementById("content").value;
-      const imageInput = document.getElementById("imageUpload");
-      const editIndex = document.getElementById("editIndex").value;
-
-      const reader = new FileReader();
-      reader.onloadend = function () {
-        const image = imageInput.files[0] ? reader.result : null;
-
-        if (editIndex === "") {
-          records.push({ title, content, image });
-        } else {
-          records[editIndex] = { title, content, image: image || records[editIndex].image };
-        }
-
-        document.getElementById("recordForm").reset();
-        document.getElementById("editIndex").value = "";
-        renderRecords();
-      };
-
-      if (imageInput.files[0]) {
-        reader.readAsDataURL(imageInput.files[0]);
-      } else {
-        reader.onloadend();
-      }
-    });
-
-    renderRecords();
-  </script>
-</body>
+    </script>
+  </body>
 </html>
