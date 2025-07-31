@@ -1,168 +1,182 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>한국 여행 지도</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>여행 기록 지도</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; background-color: #f9f9f9; }
-    h1 { text-align: center; }
-    .region-container { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
-    .region, .subregion { background-color: #fff; border: 1px solid #ccc; padding: 15px; border-radius: 8px; cursor: pointer; width: 150px; box-shadow: 1px 1px 3px rgba(0,0,0,0.1); }
-    .form-group { margin-bottom: 10px; }
-    .hidden { display: none; }
-    .note, .photo-upload { margin-top: 10px; }
-    button { margin-left: 5px; }
+    body {
+      font-family: 'Helvetica Neue', sans-serif;
+      background: url('https://images.unsplash.com/photo-1502920917128-1aa500764b79?auto=format&fit=crop&w=1500&q=80') no-repeat center center fixed;
+      background-size: cover;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+    .container {
+      background-color: rgba(255, 255, 255, 0.9);
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    }
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 20px;
+    }
+    button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      margin: 5px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #2980b9;
+    }
+    .region {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #ecf0f1;
+      border-radius: 10px;
+    }
+    .region-title {
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .subregions, .travel-entry {
+      margin-left: 15px;
+      margin-top: 10px;
+    }
+    .travel-entry textarea {
+      width: 100%;
+      height: 100px;
+      margin-top: 5px;
+    }
+    .delete-button {
+      float: right;
+      background-color: #e74c3c;
+    }
+    img.uploaded {
+      max-width: 100px;
+      margin-top: 5px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
-  <h1>한국 여행 지도</h1>
+  <div class="container">
+    <h1>여행 지도 기록</h1>
 
-  <div class="form-group">
-    <input type="text" id="mainRegionInput" placeholder="메인 지역 추가 (예: 서울)">
-    <button onclick="addMainRegion()">+</button>
-  </div>
-
-  <div id="mainRegions" class="region-container"></div>
-
-  <div id="subRegionSection" class="hidden">
-    <h2 id="selectedRegionTitle"></h2>
-    <div class="form-group">
-      <input type="text" id="subRegionInput" placeholder="세부 지역 추가 (예: 홍대)">
-      <button onclick="addSubRegion()">+</button>
+    <div>
+      <input type="text" id="mainRegionInput" placeholder="메인 지역 추가 (예: 서울)" />
+      <button onclick="addMainRegion()">메인 지역 추가</button>
     </div>
-    <div id="subRegionContainer" class="region-container"></div>
-  </div>
 
-  <div id="recordSection" class="hidden">
-    <h3 id="selectedSubRegionTitle"></h3>
-    <textarea id="travelNote" class="note" rows="4" cols="50" placeholder="여행기록을 입력하세요..."></textarea><br>
-    <input type="file" id="photoUpload" class="photo-upload" accept="image/*" multiple><br>
-    <button onclick="saveNote()">기록 저장</button>
-    <div id="savedData"></div>
+    <div id="regions"></div>
   </div>
 
   <script>
-    const mainRegionsEl = document.getElementById('mainRegions');
-    const subRegionSection = document.getElementById('subRegionSection');
-    const selectedRegionTitle = document.getElementById('selectedRegionTitle');
-    const subRegionInput = document.getElementById('subRegionInput');
-    const subRegionContainer = document.getElementById('subRegionContainer');
-    const recordSection = document.getElementById('recordSection');
-    const selectedSubRegionTitle = document.getElementById('selectedSubRegionTitle');
-    const travelNote = document.getElementById('travelNote');
-    const photoUpload = document.getElementById('photoUpload');
-    const savedData = document.getElementById('savedData');
+    let data = JSON.parse(localStorage.getItem('travelData')) || {};
 
-    let selectedMainRegion = '';
-    let selectedSubRegion = '';
-
-    const data = JSON.parse(localStorage.getItem('travelData') || '{}');
+    function saveData() {
+      localStorage.setItem('travelData', JSON.stringify(data));
+    }
 
     function addMainRegion() {
-      const name = document.getElementById('mainRegionInput').value.trim();
-      if (!name) return;
-      if (!data[name]) data[name] = {};
-      localStorage.setItem('travelData', JSON.stringify(data));
-      document.getElementById('mainRegionInput').value = '';
-      renderMainRegions();
-    }
-
-    function renderMainRegions() {
-      mainRegionsEl.innerHTML = '';
-      for (let region in data) {
-        const div = document.createElement('div');
-        div.className = 'region';
-        div.textContent = region;
-        div.onclick = () => selectMainRegion(region);
-
-        const del = document.createElement('button');
-        del.textContent = '삭제';
-        del.onclick = (e) => {
-          e.stopPropagation();
-          delete data[region];
-          localStorage.setItem('travelData', JSON.stringify(data));
-          renderMainRegions();
-          subRegionSection.classList.add('hidden');
-          recordSection.classList.add('hidden');
-        };
-
-        div.appendChild(del);
-        mainRegionsEl.appendChild(div);
+      const input = document.getElementById('mainRegionInput');
+      const region = input.value.trim();
+      if (region && !data[region]) {
+        data[region] = {};
+        saveData();
+        renderRegions();
+        input.value = '';
       }
     }
 
-    function selectMainRegion(region) {
-      selectedMainRegion = region;
-      selectedRegionTitle.textContent = `${region}의 세부 지역`;
-      subRegionSection.classList.remove('hidden');
-      recordSection.classList.add('hidden');
-      renderSubRegions();
-    }
-
-    function addSubRegion() {
-      const name = subRegionInput.value.trim();
-      if (!name) return;
-      if (!data[selectedMainRegion][name]) data[selectedMainRegion][name] = { note: '', photos: [] };
-      localStorage.setItem('travelData', JSON.stringify(data));
-      subRegionInput.value = '';
-      renderSubRegions();
-    }
-
-    function renderSubRegions() {
-      subRegionContainer.innerHTML = '';
-      const subregions = data[selectedMainRegion];
-      for (let sub in subregions) {
-        const div = document.createElement('div');
-        div.className = 'subregion';
-        div.textContent = sub;
-        div.onclick = () => selectSubRegion(sub);
-        subRegionContainer.appendChild(div);
+    function addSubRegion(mainRegion) {
+      const subRegion = prompt(`${mainRegion}의 세부 지역을 입력하세요:`);
+      if (subRegion && !data[mainRegion][subRegion]) {
+        data[mainRegion][subRegion] = { text: '', image: '' };
+        saveData();
+        renderRegions();
       }
     }
 
-    function selectSubRegion(sub) {
-      selectedSubRegion = sub;
-      selectedSubRegionTitle.textContent = `${selectedMainRegion} > ${sub}`;
-      travelNote.value = data[selectedMainRegion][sub].note;
-      recordSection.classList.remove('hidden');
-      savedData.innerHTML = '';
+    function deleteMainRegion(region) {
+      delete data[region];
+      saveData();
+      renderRegions();
     }
 
-    function saveNote() {
-      const note = travelNote.value;
-      const files = photoUpload.files;
-      const photos = [];
+    function deleteSubRegion(main, sub) {
+      delete data[main][sub];
+      saveData();
+      renderRegions();
+    }
 
-      for (let file of files) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          photos.push(e.target.result);
-          data[selectedMainRegion][selectedSubRegion].photos = photos;
-          localStorage.setItem('travelData', JSON.stringify(data));
-          renderSavedData();
-        };
-        reader.readAsDataURL(file);
+    function updateText(main, sub, value) {
+      data[main][sub].text = value;
+      saveData();
+    }
+
+    function handleImageUpload(main, sub, file) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        data[main][sub].image = e.target.result;
+        saveData();
+        renderRegions();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function renderRegions() {
+      const container = document.getElementById('regions');
+      container.innerHTML = '';
+      for (let main in data) {
+        const regionDiv = document.createElement('div');
+        regionDiv.className = 'region';
+
+        const titleDiv = document.createElement('div');
+        titleDiv.className = 'region-title';
+        titleDiv.innerHTML = `
+          <span>${main}</span>
+          <span>
+            <button onclick="addSubRegion('${main}')">세부 지역 추가</button>
+            <button class="delete-button" onclick="deleteMainRegion('${main}')">삭제</button>
+          </span>`;
+
+        const subContainer = document.createElement('div');
+        subContainer.className = 'subregions';
+
+        for (let sub in data[main]) {
+          const subDiv = document.createElement('div');
+          subDiv.innerHTML = `
+            <strong>${sub}</strong>
+            <button class="delete-button" onclick="deleteSubRegion('${main}', '${sub}')">삭제</button>
+            <div class="travel-entry">
+              <textarea placeholder="여행 기록 입력..." oninput="updateText('${main}', '${sub}', this.value)">${data[main][sub].text}</textarea>
+              <input type="file" accept="image/*" onchange="handleImageUpload('${main}', '${sub}', this.files[0])" />
+              ${data[main][sub].image ? `<br><img src="${data[main][sub].image}" class="uploaded" onclick="window.open('${data[main][sub].image}', '_blank')" />` : ''}
+            </div>
+          `;
+          subContainer.appendChild(subDiv);
+        }
+
+        regionDiv.appendChild(titleDiv);
+        regionDiv.appendChild(subContainer);
+        container.appendChild(regionDiv);
       }
-
-      data[selectedMainRegion][selectedSubRegion].note = note;
-      localStorage.setItem('travelData', JSON.stringify(data));
-      renderSavedData();
     }
 
-    function renderSavedData() {
-      const item = data[selectedMainRegion][selectedSubRegion];
-      savedData.innerHTML = `<p><strong>기록:</strong> ${item.note}</p>`;
-      item.photos.forEach(src => {
-        const img = document.createElement('img');
-        img.src = src;
-        img.style.width = '100px';
-        img.style.margin = '5px';
-        savedData.appendChild(img);
-      });
-    }
-
-    renderMainRegions();
+    renderRegions();
   </script>
 </body>
 </html>
