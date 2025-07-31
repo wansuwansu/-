@@ -81,11 +81,20 @@
       padding: 10px;
       margin-bottom: 10px;
       border-radius: 10px;
+      transition: background 0.2s;
+      cursor: pointer;
+    }
+    .record:hover {
+      background: #f0f0f0;
+    }
+    .record-content {
+      margin-top: 10px;
     }
     .record img {
       max-width: 100%;
       border-radius: 10px;
       cursor: pointer;
+      margin-top: 10px;
     }
     .add-section {
       margin: 10px 0;
@@ -197,15 +206,35 @@
       `;
       const list = document.getElementById("recordList");
       list.innerHTML = "";
-      (data[currentMain][currentSub] || []).forEach((item) => {
-        const div = document.createElement("div");
-        div.className = "record";
-        div.innerHTML = `
-          <p>${item.text}</p>
-          ${item.image ? `<img src="${item.image}" onclick="window.open('${item.image}','_blank')" />` : ""}
+
+      (data[currentMain][currentSub] || []).forEach((item, index) => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "record";
+        wrapper.innerHTML = `
+          <div onclick="toggleRecordContent(this)">
+            <strong>기록 ${index + 1}</strong> - ${item.text.slice(0, 20)}...
+          </div>
+          <div class="record-content" style="display:none;">
+            <p>${item.text}</p>
+            ${item.image ? `<img src="${item.image}" onclick="window.open('${item.image}','_blank')" />` : ""}
+            <button onclick="deleteRecord(${index})" style="margin-top:10px;background:#eb5757;color:white;border:none;border-radius:4px;padding:4px 8px;cursor:pointer;">삭제</button>
+          </div>
         `;
-        list.appendChild(div);
+        list.appendChild(wrapper);
       });
+    }
+
+    function toggleRecordContent(el) {
+      const content = el.nextElementSibling;
+      content.style.display = content.style.display === "none" ? "block" : "none";
+    }
+
+    function deleteRecord(index) {
+      if (confirm("이 기록을 삭제할까요?")) {
+        data[currentMain][currentSub].splice(index, 1);
+        saveData();
+        renderSubRegions();
+      }
     }
 
     function showRecordForm() {
