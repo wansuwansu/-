@@ -2,168 +2,167 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>한국 여행 지도</title>
   <style>
-    body { font-family: sans-serif; margin: 0; padding: 0; }
-    #map { display: flex; flex-wrap: wrap; gap: 10px; padding: 20px; }
-    .region-button { padding: 10px 20px; background: #4CAF50; color: white; border: none; cursor: pointer; border-radius: 5px; }
-    .region-button:hover { background: #45a049; }
-    #details { padding: 20px; border-top: 1px solid #ddd; }
-    .subregion { margin-top: 15px; border: 1px solid #ccc; padding: 10px; border-radius: 5px; position: relative; }
-    .subregion h4 { margin: 0 0 10px; }
-    .subregion img { max-width: 100%; height: auto; margin-top: 10px; border-radius: 5px; display: block; }
-    .add-subregion-btn, .add-image-btn, .save-btn, .add-region-btn { margin-top: 10px; padding: 5px 10px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; }
-    .add-subregion-btn:hover, .add-image-btn:hover, .save-btn:hover, .add-region-btn:hover { background: #1976D2; }
-    .delete-btn { position: absolute; top: 10px; right: 10px; background: red; color: white; padding: 3px 7px; border: none; border-radius: 4px; cursor: pointer; }
-    .delete-btn:hover { background: darkred; }
+    body { font-family: sans-serif; padding: 20px; background-color: #f9f9f9; }
+    h1 { text-align: center; }
+    .region-container { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+    .region, .subregion { background-color: #fff; border: 1px solid #ccc; padding: 15px; border-radius: 8px; cursor: pointer; width: 150px; box-shadow: 1px 1px 3px rgba(0,0,0,0.1); }
+    .form-group { margin-bottom: 10px; }
+    .hidden { display: none; }
+    .note, .photo-upload { margin-top: 10px; }
+    button { margin-left: 5px; }
   </style>
 </head>
 <body>
-  <h2 style="padding: 20px;">한국 여행 지도</h2>
+  <h1>한국 여행 지도</h1>
 
-  <div id="map">
-    <!-- 지역 버튼들이 여기 추가됨 -->
+  <div class="form-group">
+    <input type="text" id="mainRegionInput" placeholder="메인 지역 추가 (예: 서울)">
+    <button onclick="addMainRegion()">+</button>
   </div>
 
-  <div style="padding: 0 20px;">
-    <input type="text" id="regionInput" placeholder="메인 지역 이름 입력" />
-    <button class="add-region-btn" onclick="addRegion()">+ 지역 추가</button>
+  <div id="mainRegions" class="region-container"></div>
+
+  <div id="subRegionSection" class="hidden">
+    <h2 id="selectedRegionTitle"></h2>
+    <div class="form-group">
+      <input type="text" id="subRegionInput" placeholder="세부 지역 추가 (예: 홍대)">
+      <button onclick="addSubRegion()">+</button>
+    </div>
+    <div id="subRegionContainer" class="region-container"></div>
   </div>
 
-  <div id="details"></div>
+  <div id="recordSection" class="hidden">
+    <h3 id="selectedSubRegionTitle"></h3>
+    <textarea id="travelNote" class="note" rows="4" cols="50" placeholder="여행기록을 입력하세요..."></textarea><br>
+    <input type="file" id="photoUpload" class="photo-upload" accept="image/*" multiple><br>
+    <button onclick="saveNote()">기록 저장</button>
+    <div id="savedData"></div>
+  </div>
 
   <script>
-    const map = document.getElementById('map');
-    const details = document.getElementById('details');
-    const regionInput = document.getElementById('regionInput');
+    const mainRegionsEl = document.getElementById('mainRegions');
+    const subRegionSection = document.getElementById('subRegionSection');
+    const selectedRegionTitle = document.getElementById('selectedRegionTitle');
+    const subRegionInput = document.getElementById('subRegionInput');
+    const subRegionContainer = document.getElementById('subRegionContainer');
+    const recordSection = document.getElementById('recordSection');
+    const selectedSubRegionTitle = document.getElementById('selectedSubRegionTitle');
+    const travelNote = document.getElementById('travelNote');
+    const photoUpload = document.getElementById('photoUpload');
+    const savedData = document.getElementById('savedData');
 
-    let currentRegion = null;
-    let regionData = {};
+    let selectedMainRegion = '';
+    let selectedSubRegion = '';
 
-    window.onload = () => {
-      const saved = localStorage.getItem('travelData');
-      if (saved) {
-        regionData = JSON.parse(saved);
-        Object.keys(regionData).forEach(region => createRegionButton(region));
+    const data = JSON.parse(localStorage.getItem('travelData') || '{}');
+
+    function addMainRegion() {
+      const name = document.getElementById('mainRegionInput').value.trim();
+      if (!name) return;
+      if (!data[name]) data[name] = {};
+      localStorage.setItem('travelData', JSON.stringify(data));
+      document.getElementById('mainRegionInput').value = '';
+      renderMainRegions();
+    }
+
+    function renderMainRegions() {
+      mainRegionsEl.innerHTML = '';
+      for (let region in data) {
+        const div = document.createElement('div');
+        div.className = 'region';
+        div.textContent = region;
+        div.onclick = () => selectMainRegion(region);
+
+        const del = document.createElement('button');
+        del.textContent = '삭제';
+        del.onclick = (e) => {
+          e.stopPropagation();
+          delete data[region];
+          localStorage.setItem('travelData', JSON.stringify(data));
+          renderMainRegions();
+          subRegionSection.classList.add('hidden');
+          recordSection.classList.add('hidden');
+        };
+
+        div.appendChild(del);
+        mainRegionsEl.appendChild(div);
       }
-    };
-
-    function addRegion() {
-      const name = regionInput.value.trim();
-      if (!name || regionData[name]) return;
-      regionData[name] = [];
-      createRegionButton(name);
-      regionInput.value = '';
-      saveRegion(); // 초기 저장
     }
 
-    function createRegionButton(region) {
-      const btn = document.createElement('button');
-      btn.className = 'region-button';
-      btn.textContent = region;
-      btn.onclick = () => showRegion(region);
-      map.appendChild(btn);
+    function selectMainRegion(region) {
+      selectedMainRegion = region;
+      selectedRegionTitle.textContent = `${region}의 세부 지역`;
+      subRegionSection.classList.remove('hidden');
+      recordSection.classList.add('hidden');
+      renderSubRegions();
     }
 
-    function showRegion(region) {
-      currentRegion = region;
-      details.innerHTML = `<h3>${region} 상세 여행기록</h3>
-        <div id="subregions"></div>
-        <button class="add-subregion-btn" onclick="addSubregion()">+ 세부 지역 추가</button>
-        <button class="save-btn" onclick="saveRegion()">💾 저장하기</button>`;
+    function addSubRegion() {
+      const name = subRegionInput.value.trim();
+      if (!name) return;
+      if (!data[selectedMainRegion][name]) data[selectedMainRegion][name] = { note: '', photos: [] };
+      localStorage.setItem('travelData', JSON.stringify(data));
+      subRegionInput.value = '';
+      renderSubRegions();
+    }
 
-      const subregions = document.getElementById('subregions');
-      if (regionData[region]) {
-        regionData[region].forEach(data => {
-          const subDiv = createSubregionElement(data);
-          subregions.appendChild(subDiv);
-        });
+    function renderSubRegions() {
+      subRegionContainer.innerHTML = '';
+      const subregions = data[selectedMainRegion];
+      for (let sub in subregions) {
+        const div = document.createElement('div');
+        div.className = 'subregion';
+        div.textContent = sub;
+        div.onclick = () => selectSubRegion(sub);
+        subRegionContainer.appendChild(div);
       }
     }
 
-    function addSubregion() {
-      const title = prompt('세부 지역 이름을 입력하세요 (예: 홍대)');
-      if (!title) return;
-
-      const newSubregion = { title: title, content: '', images: [] };
-      const subDiv = createSubregionElement(newSubregion);
-      document.getElementById('subregions').appendChild(subDiv);
+    function selectSubRegion(sub) {
+      selectedSubRegion = sub;
+      selectedSubRegionTitle.textContent = `${selectedMainRegion} > ${sub}`;
+      travelNote.value = data[selectedMainRegion][sub].note;
+      recordSection.classList.remove('hidden');
+      savedData.innerHTML = '';
     }
 
-    function createSubregionElement(data) {
-      const subDiv = document.createElement('div');
-      subDiv.className = 'subregion';
+    function saveNote() {
+      const note = travelNote.value;
+      const files = photoUpload.files;
+      const photos = [];
 
-      const titleEl = document.createElement('h4');
-      titleEl.textContent = data.title;
+      for (let file of files) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          photos.push(e.target.result);
+          data[selectedMainRegion][selectedSubRegion].photos = photos;
+          localStorage.setItem('travelData', JSON.stringify(data));
+          renderSavedData();
+        };
+        reader.readAsDataURL(file);
+      }
 
-      const textarea = document.createElement('textarea');
-      textarea.placeholder = '여행기록 작성...';
-      textarea.rows = 4;
-      textarea.style.width = '100%';
-      textarea.value = data.content;
+      data[selectedMainRegion][selectedSubRegion].note = note;
+      localStorage.setItem('travelData', JSON.stringify(data));
+      renderSavedData();
+    }
 
-      const imageContainer = document.createElement('div');
-      imageContainer.className = 'image-list';
-      data.images.forEach(imgData => {
+    function renderSavedData() {
+      const item = data[selectedMainRegion][selectedSubRegion];
+      savedData.innerHTML = `<p><strong>기록:</strong> ${item.note}</p>`;
+      item.photos.forEach(src => {
         const img = document.createElement('img');
-        img.src = imgData;
-        imageContainer.appendChild(img);
+        img.src = src;
+        img.style.width = '100px';
+        img.style.margin = '5px';
+        savedData.appendChild(img);
       });
-
-      const fileInput = document.createElement('input');
-      fileInput.type = 'file';
-      fileInput.accept = 'image/*';
-      fileInput.style.display = 'none';
-
-      const imageBtn = document.createElement('button');
-      imageBtn.className = 'add-image-btn';
-      imageBtn.textContent = '+ 이미지 추가';
-      imageBtn.onclick = () => fileInput.click();
-
-      fileInput.onchange = () => {
-        const file = fileInput.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = () => {
-            const img = document.createElement('img');
-            img.src = reader.result;
-            imageContainer.appendChild(img);
-          };
-          reader.readAsDataURL(file);
-        }
-      };
-
-      const deleteBtn = document.createElement('button');
-      deleteBtn.className = 'delete-btn';
-      deleteBtn.textContent = '삭제';
-      deleteBtn.onclick = () => subDiv.remove();
-
-      subDiv.appendChild(titleEl);
-      subDiv.appendChild(textarea);
-      subDiv.appendChild(imageContainer);
-      subDiv.appendChild(fileInput);
-      subDiv.appendChild(imageBtn);
-      subDiv.appendChild(deleteBtn);
-
-      return subDiv;
     }
 
-    function saveRegion() {
-      const region = currentRegion;
-      const subDivs = document.querySelectorAll('.subregion');
-      regionData[region] = [];
-
-      subDivs.forEach(div => {
-        const title = div.querySelector('h4').textContent;
-        const content = div.querySelector('textarea').value;
-        const images = [...div.querySelectorAll('img')].map(img => img.src);
-        regionData[region].push({ title, content, images });
-      });
-
-      localStorage.setItem('travelData', JSON.stringify(regionData));
-      alert('저장 완료!');
-    }
+    renderMainRegions();
   </script>
 </body>
 </html>
