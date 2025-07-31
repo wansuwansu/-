@@ -24,22 +24,21 @@
       height: calc(100vh - 50px);
     }
     .main-region-list {
-      flex: 0 0 auto;
+      flex: 0 0 200px;
       background: #f0f4f3;
       padding: 10px;
       display: flex;
-      flex-wrap: wrap;
+      flex-direction: column;
       gap: 10px;
       overflow-y: auto;
       height: 100%;
-      width: 200px;
     }
     .main-region {
       background: #d4ede1;
       padding: 10px;
       border-radius: 10px;
       cursor: pointer;
-      flex: 0 0 100%;
+      text-align: center;
     }
     .content {
       flex-grow: 1;
@@ -62,14 +61,16 @@
     .sub-region-list {
       margin-top: 20px;
       display: flex;
-      flex-wrap: wrap;
+      flex-direction: column;
       gap: 10px;
     }
     .sub-region {
       background: #f9e79f;
-      padding: 8px;
+      padding: 8px 12px;
       border-radius: 8px;
-      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
     .record-section {
       margin-top: 20px;
@@ -89,7 +90,8 @@
     .add-section {
       margin: 10px 0;
     }
-    .add-section input, .add-section textarea {
+    .add-section input,
+    .add-section textarea {
       width: 100%;
       margin-top: 5px;
       padding: 8px;
@@ -141,6 +143,7 @@
         div.innerText = region;
         div.onclick = () => {
           currentMain = region;
+          currentSub = null;
           renderSubRegions();
         };
         list.appendChild(div);
@@ -161,13 +164,26 @@
       Object.keys(data[currentMain] || {}).forEach((sub) => {
         const div = document.createElement("div");
         div.className = "sub-region";
-        div.innerText = sub;
-        div.onclick = () => {
-          currentSub = sub;
-          renderRecords();
-        };
+        div.innerHTML = `
+          <span onclick="selectSubRegion('${sub}')">${sub}</span>
+          <button onclick="deleteSubRegion('${sub}')" style="background:#eb5757;color:white;border:none;border-radius:4px;padding:2px 6px;cursor:pointer;">삭제</button>
+        `;
         list.appendChild(div);
       });
+    }
+
+    function selectSubRegion(name) {
+      currentSub = name;
+      renderRecords();
+    }
+
+    function deleteSubRegion(name) {
+      if (confirm(`세부 지역 "${name}"을 삭제할까요?`)) {
+        delete data[currentMain][name];
+        currentSub = null;
+        saveData();
+        renderSubRegions();
+      }
     }
 
     function renderRecords() {
@@ -206,28 +222,26 @@
     function saveRecord() {
       const text = document.getElementById("recordText").value;
       const file = document.getElementById("recordImage").files[0];
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const newRecord = {
-          text,
-          image: reader.result,
-        };
-        data[currentMain][currentSub] = data[currentMain][currentSub] || [];
-        data[currentMain][currentSub].push(newRecord);
-        saveData();
-        renderSubRegions();
-      };
+      const newRecord = { text, image: null };
+
       if (file) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          newRecord.image = reader.result;
+          pushAndSaveRecord(newRecord);
+        };
         reader.readAsDataURL(file);
       } else {
-        const newRecord = {
-          text,
-          image: null,
-        };
-        data[currentMain][currentSub].push(newRecord);
-        saveData();
-        renderSubRegions();
+        pushAndSaveRecord(newRecord);
       }
+    }
+
+    function pushAndSaveRecord(record) {
+      data[currentMain][currentSub] = data[currentMain][currentSub] || [];
+      data[currentMain][currentSub].push(record);
+      saveData();
+      alert("저장 완료!");
+      renderSubRegions();
     }
 
     function addMainRegion() {
@@ -253,11 +267,15 @@
 
     function deleteItem() {
       if (currentSub && currentMain) {
-        delete data[currentMain][currentSub];
-        currentSub = null;
+        if (confirm(`"${currentSub}" 세부 지역을 삭제할까요?`)) {
+          delete data[currentMain][currentSub];
+          currentSub = null;
+        }
       } else if (currentMain) {
-        delete data[currentMain];
-        currentMain = null;
+        if (confirm(`"${currentMain}" 메인 지역을 삭제할까요?`)) {
+          delete data[currentMain];
+          currentMain = null;
+        }
       }
       saveData();
       document.getElementById("subRegionContainer").innerHTML = "";
